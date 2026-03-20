@@ -7,7 +7,7 @@ Kubernetes-first DevSecOps microservices system.
 - Reverse proxy + API gateway
 - Multiple backend services
 - LGTM observability stack
-- Jenkins CI
+- GitHub Actions CI
 - ArgoCD CD
 - Trivy security scanning
 

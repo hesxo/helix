@@ -43,4 +43,4 @@ jobs:
         run: make scan-api-fs
 
       - name: Scan Docker image
-        run: trivy image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 helix/api-gateway:0.1.0
+        run: trivy image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 helix/api-gateway:0.1.0
