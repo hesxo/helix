@@ -1,6 +1,6 @@
 const fastifyFactory = require('fastify');
 const underPressure = require('@fastify/under-pressure');
-const httpProxy = require('@fastify/http-proxy');
+const replyFrom = require('@fastify/reply-from');
 const client = require('prom-client');
 
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://user-service';
@@ -31,10 +31,19 @@ function buildApp() {
     }
   });
 
-  fastify.register(httpProxy, {
-    upstream: USER_SERVICE_URL,
-    prefix: '/api/users',
-    rewritePrefix: '/users',
+  fastify.register(replyFrom);
+
+  fastify.post('/api/users', async (request, reply) => {
+    requestCounter.inc({ method: 'POST', route: '/api/users', status_code: '201' });
+    return reply.from(`${USER_SERVICE_URL}/users`, {
+      body: request.body,
+    });
+  });
+
+  fastify.get('/api/users/:id', async (request, reply) => {
+    const { id } = request.params;
+    requestCounter.inc({ method: 'GET', route: '/api/users/:id', status_code: '200' });
+    return reply.from(`${USER_SERVICE_URL}/users/${id}`);
   });
 
   fastify.get('/health', async () => {
