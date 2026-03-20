@@ -1,0 +1,61 @@
+name: Helix Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  VERSION: ${{ github.ref_name }}
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/hesxo/helix-api-gateway
+
+jobs:
+  release-api-gateway:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        working-directory: apps/api-gateway
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: make test-api
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ env.VERSION }} apps/api-gateway
+
+      - name: Push Docker image
+        run: docker push ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@e07451d2e059ed86c2870430ea286b3a9e0bf241
+        with:
+          version: v0.69.3
+
+      - name: Scan Docker image
+        run: trivy image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
