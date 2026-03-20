@@ -1,9 +1,7 @@
 const fastifyFactory = require('fastify');
 const underPressure = require('@fastify/under-pressure');
 const client = require('prom-client');
-
-const orders = new Map();
-let nextId = 1;
+const pool = require('./db');
 
 function buildApp() {
   const fastify = fastifyFactory({
@@ -31,6 +29,23 @@ function buildApp() {
     }
   });
 
+  fastify.addHook('onReady', async () => {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS orders (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        item TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        total NUMERIC NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+  });
+
+  fastify.addHook('onClose', async () => {
+    await pool.end();
+  });
+
   fastify.get('/health', async () => {
     return { status: 'ok', service: 'order-service' };
   });
@@ -54,56 +69,80 @@ function buildApp() {
   });
 
   fastify.post('/orders', async (request, reply) => {
-    const { userId, items } = request.body || {};
+    const { userId, item, quantity, total } = request.body || {};
 
-    if (!userId || !items || !Array.isArray(items) || items.length === 0) {
+    if (!userId || !item || !quantity || total === undefined) {
       reply.code(400);
-      return { error: 'userId and a non-empty items array are required' };
+      return { error: 'Missing fields' };
     }
 
-    const id = String(nextId++);
-    const total = items.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0);
-    const order = {
-      id,
-      userId,
-      items,
-      total,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    };
-    orders.set(id, order);
+    const result = await pool.query(
+      `
+      INSERT INTO orders (user_id, item, quantity, total)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+      `,
+      [userId, item, quantity, total]
+    );
+
+    const row = result.rows[0];
 
     requestCounter.inc({ method: request.method, route: '/orders', status_code: '201' });
     reply.code(201);
-    return order;
+    return {
+      id: String(row.id),
+      userId: String(row.user_id),
+      item: row.item,
+      quantity: row.quantity,
+      total: Number(row.total),
+      createdAt: new Date(row.created_at).toISOString(),
+    };
   });
 
   fastify.get('/orders/:id', async (request, reply) => {
     const { id } = request.params;
-    const order = orders.get(id);
 
-    if (!order) {
+    const result = await pool.query(
+      'SELECT * FROM orders WHERE id = $1',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
       requestCounter.inc({ method: request.method, route: '/orders/:id', status_code: '404' });
       reply.code(404);
-      return { error: 'order not found' };
+      return { error: 'Order not found' };
     }
 
+    const row = result.rows[0];
+
     requestCounter.inc({ method: request.method, route: '/orders/:id', status_code: '200' });
-    return order;
+    return {
+      id: String(row.id),
+      userId: String(row.user_id),
+      item: row.item,
+      quantity: row.quantity,
+      total: Number(row.total),
+      createdAt: new Date(row.created_at).toISOString(),
+    };
   });
 
   fastify.get('/orders/user/:userId', async (request) => {
     const { userId } = request.params;
-    const userOrders = [];
 
-    for (const order of orders.values()) {
-      if (order.userId === userId) {
-        userOrders.push(order);
-      }
-    }
+    const result = await pool.query(
+      'SELECT * FROM orders WHERE user_id = $1 ORDER BY id ASC',
+      [userId]
+    );
 
     requestCounter.inc({ method: request.method, route: '/orders/user/:userId', status_code: '200' });
-    return userOrders;
+    return result.rows.map((row) => ({
+      id: String(row.id),
+      userId: String(row.user_id),
+      item: row.item,
+      quantity: row.quantity,
+      total: Number(row.total),
+      createdAt: new Date(row.created_at).toISOString(),
+    }));
   });
 
   return fastify;
