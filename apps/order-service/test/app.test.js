@@ -1,9 +1,21 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { buildApp } = require('../src/app');
+const { createPool } = require('../src/db');
+
+const testPool = createPool();
+
+test.beforeEach(async () => {
+  await testPool.query('TRUNCATE TABLE orders RESTART IDENTITY');
+});
+
+test.after(async () => {
+  await testPool.end();
+});
 
 test('GET / returns order-service status', async () => {
   const app = buildApp();
+  await app.ready();
 
   const response = await app.inject({ method: 'GET', url: '/' });
 
@@ -15,6 +27,7 @@ test('GET / returns order-service status', async () => {
 
 test('GET /health returns ok', async () => {
   const app = buildApp();
+  await app.ready();
 
   const response = await app.inject({ method: 'GET', url: '/health' });
 
@@ -26,13 +39,16 @@ test('GET /health returns ok', async () => {
 
 test('POST /orders creates an order', async () => {
   const app = buildApp();
+  await app.ready();
 
   const response = await app.inject({
     method: 'POST',
     url: '/orders',
     payload: {
       userId: '1',
-      items: [{ name: 'Widget', price: 9.99, quantity: 2 }],
+      item: 'Widget',
+      quantity: 2,
+      total: 19.98,
     },
   });
 
@@ -40,7 +56,8 @@ test('POST /orders creates an order', async () => {
   const body = response.json();
   assert.equal(body.userId, '1');
   assert.equal(body.total, 19.98);
-  assert.equal(body.status, 'pending');
+  assert.equal(body.item, 'Widget');
+  assert.equal(body.quantity, 2);
   assert.ok(body.id);
 
   await app.close();
@@ -48,13 +65,16 @@ test('POST /orders creates an order', async () => {
 
 test('GET /orders/:id returns created order', async () => {
   const app = buildApp();
+  await app.ready();
 
   const createRes = await app.inject({
     method: 'POST',
     url: '/orders',
     payload: {
       userId: '2',
-      items: [{ name: 'Gadget', price: 25, quantity: 1 }],
+      item: 'Gadget',
+      quantity: 1,
+      total: 25,
     },
   });
   const created = createRes.json();
@@ -69,32 +89,34 @@ test('GET /orders/:id returns created order', async () => {
 
 test('GET /orders/:id returns 404 for missing order', async () => {
   const app = buildApp();
+  await app.ready();
 
   const response = await app.inject({ method: 'GET', url: '/orders/999' });
 
   assert.equal(response.statusCode, 404);
-  assert.equal(response.json().error, 'order not found');
+  assert.equal(response.json().error, 'Order not found');
 
   await app.close();
 });
 
 test('GET /orders/user/:userId returns orders for user', async () => {
   const app = buildApp();
+  await app.ready();
 
   await app.inject({
     method: 'POST',
     url: '/orders',
-    payload: { userId: '5', items: [{ name: 'A', price: 10, quantity: 1 }] },
+    payload: { userId: '5', item: 'A', quantity: 1, total: 10 },
   });
   await app.inject({
     method: 'POST',
     url: '/orders',
-    payload: { userId: '5', items: [{ name: 'B', price: 20, quantity: 1 }] },
+    payload: { userId: '5', item: 'B', quantity: 1, total: 20 },
   });
   await app.inject({
     method: 'POST',
     url: '/orders',
-    payload: { userId: '6', items: [{ name: 'C', price: 5, quantity: 1 }] },
+    payload: { userId: '6', item: 'C', quantity: 1, total: 5 },
   });
 
   const response = await app.inject({ method: 'GET', url: '/orders/user/5' });
@@ -107,6 +129,7 @@ test('GET /orders/user/:userId returns orders for user', async () => {
 
 test('POST /orders returns 400 without required fields', async () => {
   const app = buildApp();
+  await app.ready();
 
   const response = await app.inject({
     method: 'POST',
@@ -115,7 +138,7 @@ test('POST /orders returns 400 without required fields', async () => {
   });
 
   assert.equal(response.statusCode, 400);
-  assert.equal(response.json().error, 'userId and a non-empty items array are required');
+  assert.equal(response.json().error, 'Missing fields');
 
   await app.close();
 });

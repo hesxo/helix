@@ -1,12 +1,14 @@
 const fastifyFactory = require('fastify');
 const underPressure = require('@fastify/under-pressure');
 const client = require('prom-client');
-const pool = require('./db');
+const { createPool } = require('./db');
 
 function buildApp() {
   const fastify = fastifyFactory({
     logger: true
   });
+
+  const pool = createPool();
 
   const register = new client.Registry();
 
