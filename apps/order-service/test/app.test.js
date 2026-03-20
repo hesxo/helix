@@ -5,6 +5,19 @@ const { createPool } = require('../src/db');
 
 const testPool = createPool();
 
+test.before(async () => {
+  await testPool.query(`
+    CREATE TABLE IF NOT EXISTS orders (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      item TEXT NOT NULL,
+      quantity INTEGER NOT NULL,
+      total NUMERIC NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+});
+
 test.beforeEach(async () => {
   await testPool.query('TRUNCATE TABLE orders RESTART IDENTITY');
 });
