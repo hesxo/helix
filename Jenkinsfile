@@ -2,7 +2,6 @@ pipeline {
   agent any
 
   environment {
-    APP_VERSION = ''
     IMAGE_NAME = 'helix/api-gateway'
   }
 
@@ -17,14 +16,14 @@ pipeline {
       steps {
         script {
           env.APP_VERSION = sh(script: 'cat VERSION', returnStdout: true).trim()
-          echo "APP_VERSION=${env.APP_VERSION}"
         }
+        echo "APP_VERSION=${env.APP_VERSION}"
       }
     }
 
-    stage('Check Tools') {
+    stage('Check CI Tools') {
       steps {
-        sh 'make check-tools'
+        sh 'make ci-check-tools'
       }
     }
 

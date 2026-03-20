@@ -1,4 +1,4 @@
-.PHONY: version check-tools test-api build-api scan-api-image scan-api-fs k8s-apply k8s-status
+.PHONY: version check-tools ci-check-tools test-api build-api scan-api-image scan-api-fs k8s-apply k8s-status
 
 APP_VERSION := $(shell cat VERSION)
 
@@ -15,6 +15,15 @@ check-tools:
 	@npm --version
 	@pnpm --version
 	@trivy --version
+
+ci-check-tools:
+	@git --version
+	@docker version
+	@node --version
+	@npm --version
+	@pnpm --version
+	@trivy --version
+	@make --version
 
 test-api:
 	cd apps/api-gateway && pnpm test

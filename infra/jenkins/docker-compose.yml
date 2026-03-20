@@ -2,6 +2,7 @@ services:
   jenkins:
     build: .
     container_name: helix-jenkins
+    user: root
     ports:
       - "8088:8080"
       - "50000:50000"
