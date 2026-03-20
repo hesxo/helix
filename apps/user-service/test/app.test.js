@@ -1,6 +1,28 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { buildApp } = require('../src/app');
+const { createPool } = require('../src/db');
+
+const pool = createPool();
+
+test.before(async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+});
+
+test.beforeEach(async () => {
+  await pool.query('TRUNCATE TABLE users RESTART IDENTITY;');
+});
+
+test.after(async () => {
+  await pool.end();
+});
 
 test('GET / returns user-service status', async () => {
   const app = buildApp();
