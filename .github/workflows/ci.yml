@@ -50,6 +50,23 @@ jobs:
 
   user-service-ci:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: helix
+          POSTGRES_USER: helix
+          POSTGRES_PASSWORD: helix
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U helix -d helix"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DATABASE_URL: postgres://helix:helix@localhost:5432/helix?sslmode=disable
 
     steps:
       - name: Checkout

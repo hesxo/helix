@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: order-service
-          image: ghcr.io/hesxo/helix-order-service:v0.1.0
+          image: ghcr.io/hesxo/helix-order-service:v0.1.5
           ports:
             - containerPort: 8082
           env:

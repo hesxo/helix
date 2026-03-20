@@ -4,6 +4,7 @@ const { buildApp } = require('../src/app');
 
 test('GET / returns user-service status', async () => {
   const app = buildApp();
+  await app.ready();
 
   const response = await app.inject({ method: 'GET', url: '/' });
 
@@ -16,6 +17,7 @@ test('GET / returns user-service status', async () => {
 
 test('GET /health returns ok', async () => {
   const app = buildApp();
+  await app.ready();
 
   const response = await app.inject({ method: 'GET', url: '/health' });
 
@@ -27,6 +29,7 @@ test('GET /health returns ok', async () => {
 
 test('POST /users creates a user', async () => {
   const app = buildApp();
+  await app.ready();
 
   const response = await app.inject({
     method: 'POST',
@@ -45,6 +48,7 @@ test('POST /users creates a user', async () => {
 
 test('GET /users/:id returns created user', async () => {
   const app = buildApp();
+  await app.ready();
 
   const createRes = await app.inject({
     method: 'POST',
@@ -63,6 +67,7 @@ test('GET /users/:id returns created user', async () => {
 
 test('GET /users/:id returns 404 for missing user', async () => {
   const app = buildApp();
+  await app.ready();
 
   const response = await app.inject({ method: 'GET', url: '/users/999' });
 
@@ -74,6 +79,7 @@ test('GET /users/:id returns 404 for missing user', async () => {
 
 test('POST /users returns 400 without required fields', async () => {
   const app = buildApp();
+  await app.ready();
 
   const response = await app.inject({
     method: 'POST',

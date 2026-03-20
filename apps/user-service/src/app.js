@@ -2,13 +2,14 @@ const fastifyFactory = require('fastify');
 const underPressure = require('@fastify/under-pressure');
 const client = require('prom-client');
 
-const users = new Map();
-let nextId = 1;
+const { createPool } = require('./db');
 
 function buildApp() {
   const fastify = fastifyFactory({
     logger: true
   });
+
+  const pool = createPool();
 
   const register = new client.Registry();
 
@@ -44,6 +45,24 @@ function buildApp() {
     return register.metrics();
   });
 
+  // Ensure schema exists before handling traffic.
+  // This runs once Fastify is ready (including during tests via `await app.ready()`).
+  fastify.addHook('onReady', async () => {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+  });
+
+  // Close DB connections on shutdown.
+  fastify.addHook('onClose', async () => {
+    await pool.end();
+  });
+
   fastify.get('/', async (request) => {
     requestCounter.inc({ method: request.method, route: '/', status_code: '200' });
     return {
@@ -61,9 +80,18 @@ function buildApp() {
       return { error: 'name and email are required' };
     }
 
-    const id = String(nextId++);
-    const user = { id, name, email, createdAt: new Date().toISOString() };
-    users.set(id, user);
+    const result = await pool.query(
+      'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id, name, email, created_at',
+      [name, email]
+    );
+
+    const row = result.rows[0];
+    const user = {
+      id: String(row.id),
+      name: row.name,
+      email: row.email,
+      createdAt: new Date(row.created_at).toISOString(),
+    };
 
     requestCounter.inc({ method: request.method, route: '/users', status_code: '201' });
     reply.code(201);
@@ -72,16 +100,26 @@ function buildApp() {
 
   fastify.get('/users/:id', async (request, reply) => {
     const { id } = request.params;
-    const user = users.get(id);
 
-    if (!user) {
+    const result = await pool.query(
+      'SELECT id, name, email, created_at FROM users WHERE id = $1',
+      [id]
+    );
+    const row = result.rows[0];
+
+    if (!row) {
       requestCounter.inc({ method: request.method, route: '/users/:id', status_code: '404' });
       reply.code(404);
       return { error: 'user not found' };
     }
 
     requestCounter.inc({ method: request.method, route: '/users/:id', status_code: '200' });
-    return user;
+    return {
+      id: String(row.id),
+      name: row.name,
+      email: row.email,
+      createdAt: new Date(row.created_at).toISOString(),
+    };
   });
 
   return fastify;

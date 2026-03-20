@@ -15,6 +15,7 @@
   "dependencies": {
     "@fastify/under-pressure": "^9.0.3",
     "fastify": "^5.8.2",
+    "pg": "^8.20.0",
     "prom-client": "^15.1.3"
   }
 }
