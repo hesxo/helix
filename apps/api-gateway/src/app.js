@@ -1,6 +1,9 @@
 const fastifyFactory = require('fastify');
 const underPressure = require('@fastify/under-pressure');
+const httpProxy = require('@fastify/http-proxy');
 const client = require('prom-client');
+
+const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://user-service';
 
 function buildApp() {
   const fastify = fastifyFactory({
@@ -28,18 +31,18 @@ function buildApp() {
     }
   });
 
+  fastify.register(httpProxy, {
+    upstream: USER_SERVICE_URL,
+    prefix: '/api/users',
+    rewritePrefix: '/users',
+  });
+
   fastify.get('/health', async () => {
-    return {
-      status: 'ok',
-      service: 'api-gateway'
-    };
+    return { status: 'ok', service: 'api-gateway' };
   });
 
   fastify.get('/ready', async () => {
-    return {
-      status: 'ready',
-      service: 'api-gateway'
-    };
+    return { status: 'ready', service: 'api-gateway' };
   });
 
   fastify.get('/metrics', async (_request, reply) => {

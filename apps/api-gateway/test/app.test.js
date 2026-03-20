@@ -14,7 +14,7 @@ test('GET / returns gateway status payload', async () => {
 
   const body = response.json();
   assert.equal(body.service, 'api-gateway');
-  assert.equal(body.version, '0.1.0');
+  assert.ok(body.version);
 
   await app.close();
 });

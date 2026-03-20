@@ -5,3 +5,5 @@ resources:
   - namespace.yaml
   - api-gateway-deployment.yaml
   - api-gateway-service.yaml
+  - user-service-deployment.yaml
+  - user-service-service.yaml

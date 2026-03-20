@@ -1,7 +1,7 @@
 {
-  "name": "api-gateway",
+  "name": "user-service",
   "version": "0.1.0",
-  "description": "Helix API Gateway service",
+  "description": "Helix User Service",
   "main": "src/server.js",
   "scripts": {
     "test": "node --test",
@@ -13,7 +13,6 @@
   "license": "ISC",
   "packageManager": "pnpm@10.30.3",
   "dependencies": {
-    "@fastify/http-proxy": "^11.4.2",
     "@fastify/under-pressure": "^9.0.3",
     "fastify": "^5.8.2",
     "prom-client": "^15.1.3"

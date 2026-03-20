@@ -47,3 +47,41 @@ jobs:
 
       - name: Scan Docker image
         run: trivy image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 helix/api-gateway:0.1.0
+
+  user-service-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        working-directory: apps/user-service
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@e07451d2e059ed86c2870430ea286b3a9e0bf241
+        with:
+          version: v0.69.3
+
+      - name: Run tests
+        run: make test-user
+
+      - name: Build Docker image
+        run: make build-user
+
+      - name: Scan filesystem
+        run: make scan-user-fs
+
+      - name: Scan Docker image
+        run: trivy image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 helix/user-service:0.1.0
