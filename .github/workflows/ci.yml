@@ -1,0 +1,44 @@
+name: Helix CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  api-gateway-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install deps
+        working-directory: apps/api-gateway
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@v0.2.2
+
+      - name: Run tests
+        run: make test-api
+
+      - name: Build Docker image
+        run: make build-api
+
+      - name: Scan filesystem
+        run: make scan-api-fs
+
+      - name: Scan Docker image
+        run: trivy image --severity HIGH,CRITICAL --exit-code 1 helix/api-gateway:0.1.0
