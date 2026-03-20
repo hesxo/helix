@@ -1,0 +1,20 @@
+{
+  "name": "api-gateway",
+  "version": "0.1.0",
+  "description": "Helix API Gateway service",
+  "main": "src/server.js",
+  "scripts": {
+    "test": "node --test",
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.30.3",
+  "dependencies": {
+    "@fastify/under-pressure": "^9.0.3",
+    "fastify": "^5.8.2",
+    "prom-client": "^15.1.3"
+  }
+}

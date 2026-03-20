@@ -1,0 +1,67 @@
+const fastifyFactory = require('fastify');
+const underPressure = require('@fastify/under-pressure');
+const client = require('prom-client');
+
+function buildApp() {
+  const fastify = fastifyFactory({
+    logger: true
+  });
+
+  const register = new client.Registry();
+
+  client.collectDefaultMetrics({
+    register
+  });
+
+  const requestCounter = new client.Counter({
+    name: 'helix_api_gateway_requests_total',
+    help: 'Total number of requests handled by the API gateway',
+    labelNames: ['method', 'route', 'status_code'],
+    registers: [register],
+  });
+
+  fastify.register(underPressure, {
+    exposeStatusRoute: {
+      routeResponseSchemaOpts: {
+        version: false
+      }
+    }
+  });
+
+  fastify.get('/health', async () => {
+    return {
+      status: 'ok',
+      service: 'api-gateway'
+    };
+  });
+
+  fastify.get('/ready', async () => {
+    return {
+      status: 'ready',
+      service: 'api-gateway'
+    };
+  });
+
+  fastify.get('/metrics', async (_request, reply) => {
+    reply.header('Content-Type', register.contentType);
+    return register.metrics();
+  });
+
+  fastify.get('/', async (request) => {
+    requestCounter.inc({
+      method: request.method,
+      route: '/',
+      status_code: '200'
+    });
+
+    return {
+      message: 'Helix API Gateway is running',
+      service: 'api-gateway',
+      version: '0.1.0'
+    };
+  });
+
+  return fastify;
+}
+
+module.exports = { buildApp };
