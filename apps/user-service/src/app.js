@@ -45,19 +45,6 @@ function buildApp() {
     return register.metrics();
   });
 
-  // Ensure schema exists before handling traffic.
-  // This runs once Fastify is ready (including during tests via `await app.ready()`).
-  fastify.addHook('onReady', async () => {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-  });
-
   // Close DB connections on shutdown.
   fastify.addHook('onClose', async () => {
     await pool.end();

@@ -31,19 +31,6 @@ function buildApp() {
     }
   });
 
-  fastify.addHook('onReady', async () => {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS orders (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL,
-        item TEXT NOT NULL,
-        quantity INTEGER NOT NULL,
-        total NUMERIC NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
-  });
-
   fastify.addHook('onClose', async () => {
     await pool.end();
   });
