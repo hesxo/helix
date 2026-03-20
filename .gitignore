@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+.env
+*.log
+.DS_Store
+
+docker-data/
+tmp/
+
+*.secret.yaml
+
+.vscode/
+.idea/
