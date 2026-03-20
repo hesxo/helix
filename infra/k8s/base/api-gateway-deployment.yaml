@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: helix/api-gateway:0.1.0
+          image: ghcr.io/hesxo/helix-api-gateway:v0.1.2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
