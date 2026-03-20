@@ -9,7 +9,6 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   VERSION: ${{ github.ref_name }}
   REGISTRY: ghcr.io
-  IMAGE_NAME: ghcr.io/hesxo/helix-api-gateway
 
 jobs:
   release-api-gateway:
@@ -17,6 +16,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      IMAGE_NAME: ghcr.io/hesxo/helix-api-gateway
 
     steps:
       - name: Checkout
@@ -46,6 +47,118 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t ${{ env.IMAGE_NAME }}:${{ env.VERSION }} apps/api-gateway
+
+      - name: Scan Docker image
+        run: trivy image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Docker image
+        run: docker push ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+
+      - name: Tag Docker image with SHA
+        run: docker tag ${{ env.IMAGE_NAME }}:${{ env.VERSION }} ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Push SHA image
+        run: docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  release-user-service:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE_NAME: ghcr.io/hesxo/helix-user-service
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        working-directory: apps/user-service
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: make test-user
+
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@e07451d2e059ed86c2870430ea286b3a9e0bf241
+        with:
+          version: v0.69.3
+
+      - name: Build Docker image
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ env.VERSION }} apps/user-service
+
+      - name: Scan Docker image
+        run: trivy image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Docker image
+        run: docker push ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+
+      - name: Tag Docker image with SHA
+        run: docker tag ${{ env.IMAGE_NAME }}:${{ env.VERSION }} ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Push SHA image
+        run: docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  release-order-service:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE_NAME: ghcr.io/hesxo/helix-order-service
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        working-directory: apps/order-service
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: make test-order
+
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@e07451d2e059ed86c2870430ea286b3a9e0bf241
+        with:
+          version: v0.69.3
+
+      - name: Build Docker image
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ env.VERSION }} apps/order-service
 
       - name: Scan Docker image
         run: trivy image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 ${{ env.IMAGE_NAME }}:${{ env.VERSION }}

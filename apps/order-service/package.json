@@ -1,7 +1,7 @@
 {
-  "name": "api-gateway",
+  "name": "order-service",
   "version": "0.1.0",
-  "description": "Helix API Gateway service",
+  "description": "Helix Order Service",
   "main": "src/server.js",
   "scripts": {
     "test": "node --test",
@@ -13,8 +13,6 @@
   "license": "ISC",
   "packageManager": "pnpm@10.30.3",
   "dependencies": {
-    "@fastify/cors": "^11.2.0",
-    "@fastify/reply-from": "^12.6.1",
     "@fastify/under-pressure": "^9.0.3",
     "fastify": "^5.8.2",
     "prom-client": "^15.1.3"

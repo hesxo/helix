@@ -1,9 +1,11 @@
 const fastifyFactory = require('fastify');
 const underPressure = require('@fastify/under-pressure');
 const replyFrom = require('@fastify/reply-from');
+const cors = require('@fastify/cors');
 const client = require('prom-client');
 
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://user-service';
+const ORDER_SERVICE_URL = process.env.ORDER_SERVICE_URL || 'http://order-service';
 
 function buildApp() {
   const fastify = fastifyFactory({
@@ -33,6 +35,13 @@ function buildApp() {
 
   fastify.register(replyFrom);
 
+  // Enable CORS so the Vite frontend (different port) can call the gateway directly.
+  // Keep this permissive for demo purposes.
+  fastify.register(cors, {
+    origin: true,
+    methods: ['GET', 'POST', 'OPTIONS'],
+  });
+
   fastify.post('/api/users', async (request, reply) => {
     requestCounter.inc({ method: 'POST', route: '/api/users', status_code: '201' });
     return reply.from(`${USER_SERVICE_URL}/users`, {
@@ -44,6 +53,25 @@ function buildApp() {
     const { id } = request.params;
     requestCounter.inc({ method: 'GET', route: '/api/users/:id', status_code: '200' });
     return reply.from(`${USER_SERVICE_URL}/users/${id}`);
+  });
+
+  fastify.post('/api/orders', async (request, reply) => {
+    requestCounter.inc({ method: 'POST', route: '/api/orders', status_code: '201' });
+    return reply.from(`${ORDER_SERVICE_URL}/orders`, {
+      body: request.body,
+    });
+  });
+
+  fastify.get('/api/orders/:id', async (request, reply) => {
+    const { id } = request.params;
+    requestCounter.inc({ method: 'GET', route: '/api/orders/:id', status_code: '200' });
+    return reply.from(`${ORDER_SERVICE_URL}/orders/${id}`);
+  });
+
+  fastify.get('/api/orders/user/:userId', async (request, reply) => {
+    const { userId } = request.params;
+    requestCounter.inc({ method: 'GET', route: '/api/orders/user/:userId', status_code: '200' });
+    return reply.from(`${ORDER_SERVICE_URL}/orders/user/${userId}`);
   });
 
   fastify.get('/health', async () => {

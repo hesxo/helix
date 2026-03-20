@@ -10,5 +10,7 @@ tmp/
 
 *.secret.yaml
 
+.pnpm-store/
+
 .vscode/
 .idea/

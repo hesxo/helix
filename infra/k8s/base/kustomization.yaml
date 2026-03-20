@@ -7,3 +7,5 @@ resources:
   - api-gateway-service.yaml
   - user-service-deployment.yaml
   - user-service-service.yaml
+  - order-service-deployment.yaml
+  - order-service-service.yaml

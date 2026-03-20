@@ -1,40 +1,40 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-service
+  name: order-service
   namespace: helix
   labels:
-    app: user-service
+    app: order-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: user-service
+      app: order-service
   template:
     metadata:
       labels:
-        app: user-service
+        app: order-service
     spec:
       containers:
-        - name: user-service
-          image: ghcr.io/hesxo/helix-user-service:v0.1.0
+        - name: order-service
+          image: ghcr.io/hesxo/helix-order-service:v0.1.0
           ports:
-            - containerPort: 8081
+            - containerPort: 8082
           env:
-            - name: USER_SERVICE_PORT
-              value: "8081"
+            - name: ORDER_SERVICE_PORT
+              value: "8082"
             - name: APP_VERSION
               value: "0.1.0"
           readinessProbe:
             httpGet:
               path: /ready
-              port: 8081
+              port: 8082
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /health
-              port: 8081
+              port: 8082
             initialDelaySeconds: 10
             periodSeconds: 20
           resources:
