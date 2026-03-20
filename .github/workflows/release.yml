@@ -208,3 +208,31 @@ jobs:
 
       - name: Push SHA image
         run: docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  release-frontend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    env:
+      VERSION: ${{ github.ref_name }}
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ghcr.io/hesxo/helix-frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build frontend image
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ env.VERSION }} apps/frontend
+
+      - name: Push frontend image
+        run: docker push ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
