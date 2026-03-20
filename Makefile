@@ -1,3 +1,5 @@
+.PHONY: version check-tools
+
 APP_VERSION := $(shell cat VERSION)
 
 version:
