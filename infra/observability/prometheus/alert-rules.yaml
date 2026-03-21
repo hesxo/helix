@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alert-rules
+  namespace: helix
+data:
+  alert-rules.yml: |
+    groups:
+      - name: helix-alerts
+        rules:
+          - alert: HelixHighGatewayErrorRate
+            expr: sum(rate(helix_api_gateway_requests_total{status_code=~"5.."}[5m])) > 0.1
+            for: 2m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High gateway 5xx error rate"
+              description: "api-gateway is returning 5xx errors above threshold for 2 minutes."
+
+          - alert: HelixHighGatewayP95Latency
+            expr: histogram_quantile(0.95, sum by (le) (rate(helix_api_gateway_request_duration_seconds_bucket[5m]))) > 0.3
+            for: 2m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High gateway p95 latency"
+              description: "api-gateway p95 latency is above 300ms for 2 minutes."
+
+          - alert: HelixUserServiceDown
+            expr: up{job="user-service"} == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "user-service is down"
+              description: "Prometheus cannot scrape user-service."
+
+          - alert: HelixOrderServiceDown
+            expr: up{job="order-service"} == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "order-service is down"
+              description: "Prometheus cannot scrape order-service."
+
+          - alert: HelixApiGatewayDown
+            expr: up{job="api-gateway"} == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "api-gateway is down"
+              description: "Prometheus cannot scrape api-gateway."
