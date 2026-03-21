@@ -25,6 +25,34 @@ function buildApp() {
     registers: [register],
   });
 
+  const httpRequestDuration = new client.Histogram({
+    name: 'helix_api_gateway_request_duration_seconds',
+    help: 'HTTP request duration in seconds',
+    labelNames: ['method', 'route', 'status_code'],
+    buckets: [0.005, 0.01, 0.05, 0.1, 0.3, 0.5, 1, 2, 5],
+    registers: [register],
+  });
+
+  fastify.addHook('onRequest', async (request) => {
+    request._helixDurationEnd = httpRequestDuration.startTimer();
+  });
+
+  fastify.addHook('onResponse', async (request, reply) => {
+    const end = request._helixDurationEnd;
+    if (typeof end !== 'function') {
+      return;
+    }
+    const route =
+      request.routeOptions?.url ??
+      (request.url ? request.url.split('?')[0] : null) ??
+      'unknown';
+    end({
+      method: request.method,
+      route,
+      status_code: String(reply.statusCode),
+    });
+  });
+
   fastify.register(underPressure, {
     exposeStatusRoute: {
       routeResponseSchemaOpts: {
