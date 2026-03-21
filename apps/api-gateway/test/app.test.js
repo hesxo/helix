@@ -34,3 +34,21 @@ test('GET /health returns ok', async () => {
 
   await app.close();
 });
+
+test('unknown route returns 404 with Not Found payload', async () => {
+  const app = buildApp();
+
+  const response = await app.inject({
+    method: 'GET',
+    url: '/api/does-not-exist',
+  });
+
+  assert.equal(response.statusCode, 404);
+
+  const body = response.json();
+  assert.equal(body.error, 'Not Found');
+  assert.equal(body.statusCode, 404);
+  assert.match(body.message, /GET:\/api\/does-not-exist/);
+
+  await app.close();
+});

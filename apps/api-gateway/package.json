@@ -1,6 +1,6 @@
 {
   "name": "api-gateway",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "description": "Helix API Gateway service",
   "main": "src/server.js",
   "scripts": {

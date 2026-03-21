@@ -129,6 +129,35 @@ function buildApp() {
     };
   });
 
+  fastify.setNotFoundHandler((request, reply) => {
+    requestCounter.inc({
+      method: request.method,
+      route: 'not_found',
+      status_code: '404',
+    });
+
+    request.log.warn(
+      {
+        req: {
+          method: request.method,
+          url: request.url,
+          host: request.hostname,
+          remoteAddress: request.ip,
+        },
+        res: {
+          statusCode: 404,
+        },
+      },
+      'route not found'
+    );
+
+    reply.code(404).send({
+      message: `Route ${request.method}:${request.url} not found`,
+      error: 'Not Found',
+      statusCode: 404,
+    });
+  });
+
   return fastify;
 }
 
