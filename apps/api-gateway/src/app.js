@@ -138,20 +138,14 @@ function buildApp() {
 
     request.log.warn(
       {
-        req: {
-          method: request.method,
-          url: request.url,
-          host: request.hostname,
-          remoteAddress: request.ip,
-        },
-        res: {
-          statusCode: 404,
-        },
+        method: request.method,
+        url: request.url,
+        statusCode: 404,
       },
       'route not found'
     );
 
-    reply.code(404).send({
+    return reply.code(404).send({
       message: `Route ${request.method}:${request.url} not found`,
       error: 'Not Found',
       statusCode: 404,
