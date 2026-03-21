@@ -130,21 +130,7 @@ function buildApp() {
   });
 
   fastify.setNotFoundHandler((request, reply) => {
-    requestCounter.inc({
-      method: request.method,
-      route: 'not_found',
-      status_code: '404',
-    });
-
-    request.log.warn(
-      {
-        method: request.method,
-        url: request.url,
-        statusCode: 404,
-      },
-      'route not found'
-    );
-
+    request.log.warn({ method: request.method, url: request.url }, 'route not found');
     return reply.code(404).send({
       message: `Route ${request.method}:${request.url} not found`,
       error: 'Not Found',
