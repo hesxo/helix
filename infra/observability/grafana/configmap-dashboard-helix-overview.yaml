@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-helix-overview
+  namespace: helix
+data:
+  helix-overview.json: |
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 14, "w": 24, "x": 0, "y": 0 },
+          "id": 7,
+          "options": {
+            "dedupStrategy": "none",
+            "enableLogDetails": true,
+            "prettifyLogMessage": true,
+            "showCommonLabels": true,
+            "showLabels": false,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": true
+          },
+          "targets": [
+            {
+              "datasource": { "type": "loki", "uid": "loki" },
+              "editorMode": "code",
+              "expr": "{namespace=\"helix\", container=\"api-gateway\"} |= \"route not found\"",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Helix Live Logs (api-gateway 404)",
+          "type": "logs"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 12, "w": 24, "x": 0, "y": 14 },
+          "id": 8,
+          "options": {
+            "dedupStrategy": "none",
+            "enableLogDetails": true,
+            "prettifyLogMessage": true,
+            "showCommonLabels": true,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": true
+          },
+          "targets": [
+            {
+              "datasource": { "type": "loki", "uid": "loki" },
+              "editorMode": "code",
+              "expr": "{namespace=\"helix\", container=\"api-gateway\"}",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Helix api-gateway (all logs)",
+          "type": "logs"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "tags": ["helix", "loki"],
+      "templating": { "list": [] },
+      "time": { "from": "now-1h", "to": "now" },
+      "timepicker": {},
+      "timezone": "",
+      "title": "Helix Overview",
+      "uid": "helix-overview",
+      "version": 1
+    }
